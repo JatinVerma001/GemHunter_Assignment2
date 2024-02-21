@@ -27,6 +27,7 @@ namespace GemHunter1
                 }
             }
             PlaceGems(7);
+            PlaceObstacles(5);
         }
         private void PlaceGems(int numberOfGems)
         {
@@ -44,6 +45,23 @@ namespace GemHunter1
                 Grid[x, y].Occupant = "G";
             }
         }
+        private void PlaceObstacles(int numberOfObstacles)
+        {
+            Random random = new Random();
+
+            for (int i = 0; i < numberOfObstacles; i++)
+            {
+                int x, y;
+                do
+                {
+                    x = random.Next(0, Grid.GetLength(0));
+                    y = random.Next(0, Grid.GetLength(1));
+                } while (Grid[x, y].Occupant != "-");
+
+                Grid[x, y].Occupant = "X";
+            }
+        }
+
         public void Display()
         {
             for (int i = 0; i < Grid.GetLength(0); i++)
