@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GemHunter1;
+using System;
 
 namespace GemHunter1
 {
@@ -35,7 +36,124 @@ namespace GemHunter1
             Position = initialPosition;
             GemCount = 0;
         }
+
+        public void MovePlayer(Player player, string direction)
+        {
+            var position = player.Position;
+            var x = position.X;
+            var y = position.Y;
+
+            switch (direction)
+            {
+                case "U":
+                    x--;
+                    if (x < 0) x = 0;
+                    break;
+                case "D":
+                    x++;
+                    if (x > 5) x = 5;
+                    break;
+                case "L":
+                    y--;
+                    if (y < 0) y = 0;
+                    break;
+                case "R":
+                    y++;
+                    if (y > 5) y = 5;
+                    break;
+                default:
+                    Console.WriteLine("Invalid move. Please enter U, D, L, or R.");
+                    break;
+            }
+
+            Position = new Position(x, y);
+
+        }
+
+
     }
+
+    public class Game
+    {
+        public Board Board { get; }
+
+        public Game()
+        {
+            Board = new Board();
+        }
+
+        public void Start()
+        {
+            Console.WriteLine("Welcome to Gem Hunters! \n");
+
+            for (int turn = 1; turn <= 15; turn++)
+            {
+                Console.WriteLine($"Turn {turn}:");
+
+                DisplayBoard();
+                TakeTurn();
+                SwitchTurn();
+            }
+
+            AnnounceWinner();
+        }
+
+        public void DisplayBoard()
+        {
+            Console.WriteLine("Current Board:");
+            Board.Display();
+            Console.WriteLine($"{Board.Player1.Name}: {Board.Player1.GemCount} gems");
+            Console.WriteLine($"{Board.Player2.Name}: {Board.Player2.GemCount} gems");
+        }
+        private void TakeTurn()
+        {
+            Console.WriteLine($"{Board.CurrentTurn.Name}'s turn. Enter move (U/D/L/R): ");
+            string move = Console.ReadLine().ToUpper() ?? "";
+
+
+            if (Board.IsValidMove(Board.CurrentTurn, move))
+            {
+                Board.CurrentTurn.MovePlayer(Board.CurrentTurn, move);
+                Board.CollectGem(Board.CurrentTurn);
+            }
+
+
+            // Check for obstacles
+            if (Board.Grid[Board.CurrentTurn.Position.X, Board.CurrentTurn.Position.Y].Occupant == "X")
+            {
+                Console.WriteLine($"Oops! {Board.CurrentTurn.Name} hit an obstacle and cannot move.");
+                // You might want to handle this differently, e.g., skip the turn or penalize the player
+            }
+        }
+
+
+        private void SwitchTurn()
+        {
+            Board.CurrentTurn = (Board.CurrentTurn == Board.Player1) ? Board.Player2 : Board.Player1;
+        }
+
+        private bool IsGameOver()
+        {
+            // You can define your own game-over conditions
+            return Board.Player1.GemCount + Board.Player2.GemCount >= 20;
+        }
+
+        private void AnnounceWinner()
+        {
+            Console.WriteLine("Game over!");
+            Console.WriteLine($"{Board.Player1.Name}: {Board.Player1.GemCount} gems");
+            Console.WriteLine($"{Board.Player2.Name}: {Board.Player2.GemCount} gems");
+
+            if (Board.Player1.GemCount > Board.Player2.GemCount)
+                Console.WriteLine($"{Board.Player1.Name} wins!");
+            else if (Board.Player2.GemCount > Board.Player1.GemCount)
+                Console.WriteLine($"{Board.Player2.Name} wins!");
+            else
+                Console.WriteLine("It's a tie!");
+        }
+
+    }
+
 
     public class Board
     {
@@ -110,119 +228,61 @@ namespace GemHunter1
                 Console.WriteLine();
             }
         }
-    }
 
-    public class Game
-    {
-        public Board Board { get; }
-
-        public Game()
+        public bool IsValidMove(Player player, string direction)
         {
-            Board = new Board();
-        }
-        private void CollectGem(Player player)
-        {
-            int x = player.Position.X;
-            int y = player.Position.Y;
+            var position = player.Position;
+            var x = position.X;
+            var y = position.Y;
 
-            if (Board.Grid[x, y].Occupant == "G")
-            {
-                // The player's new position contains a gem
-                player.GemCount++;
-                Board.Grid[x, y].Occupant = "-"; // Remove the gem from the board
-            }
-        }
-        public void Start()
-        {
-            Console.WriteLine("Welcome to Gem Hunters! \n");
-
-            for (int turn = 1; turn <= 15; turn++)
-            {
-                Console.WriteLine($"Turn {turn}:");
-
-                DisplayBoard();
-                TakeTurn();
-                SwitchTurn();
-            }
-
-            AnnounceWinner();
-        }
-
-        public void DisplayBoard()
-        {
-            Console.WriteLine("Current Board:");
-            Board.Display();
-            Console.WriteLine($"{Board.Player1.Name}: {Board.Player1.GemCount} gems");
-            Console.WriteLine($"{Board.Player2.Name}: {Board.Player2.GemCount} gems");
-        }
-        private void TakeTurn()
-        {
-            Console.WriteLine($"{Board.CurrentTurn.Name}'s turn. Enter move (U/D/L/R): ");
-            char move = Console.ReadKey().KeyChar;
-
-            // Implement movement logic
-            MovePlayer(Board.CurrentTurn, move);
-
-            // Check for gem collection
-            CollectGem(Board.CurrentTurn);
-
-            // Check for obstacles
-            if (Board.Grid[Board.CurrentTurn.Position.X, Board.CurrentTurn.Position.Y].Occupant == "X")
-            {
-                Console.WriteLine($"Oops! {Board.CurrentTurn.Name} hit an obstacle and cannot move.");
-                // You might want to handle this differently, e.g., skip the turn or penalize the player
-            }
-        }
-
-        private void MovePlayer(Player player, char direction)
-        {
             switch (direction)
             {
-                case 'U':
-                    if (player.Position.X > 0)
-                        player.Position.X--;
+                case "U":
+                    x--;
+                    if (x < 0) x = 0;
                     break;
-                case 'D':
-                    if (player.Position.X < Board.Grid.GetLength(0) - 1)
-                        player.Position.X++;
+                case "D":
+                    x++;
+                    if (x > 5) x = 5;
                     break;
-                case 'L':
-                    if (player.Position.Y > 0)
-                        player.Position.Y--;
+                case "L":
+                    y--;
+                    if (y < 0) y = 0;
                     break;
-                case 'R':
-                    if (player.Position.Y < Board.Grid.GetLength(1) - 1)
-                        player.Position.Y++;
+                case "R":
+                    y++;
+                    if (y > 5) y = 5;
                     break;
                 default:
                     Console.WriteLine("Invalid move. Please enter U, D, L, or R.");
                     break;
             }
-        }
-        private void SwitchTurn()
-        {
-            Board.CurrentTurn = (Board.CurrentTurn == Board.Player1) ? Board.Player2 : Board.Player1;
+
+            bool isValidMove = Grid[x, y].Occupant == "X" ? false : true;
+
+            if (isValidMove)
+            {
+                Grid[position.X, position.Y].Occupant = "-";
+            }
+
+            return isValidMove;
         }
 
-        private bool IsGameOver()
+        public void CollectGem(Player player)
         {
-            // You can define your own game-over conditions
-            return Board.Player1.GemCount + Board.Player2.GemCount >= 20;
+            int x = player.Position.X;
+            int y = player.Position.Y;
+
+            if (Grid[x, y].Occupant == "G")
+            {
+                // The player's new position contains a gem
+                player.GemCount++;
+                
+            }
+            Grid[x, y].Occupant = player.Name; // Remove the gem from the board
+
         }
 
-        private void AnnounceWinner()
-        {
-            Console.WriteLine("Game over!");
-            Console.WriteLine($"{Board.Player1.Name}: {Board.Player1.GemCount} gems");
-            Console.WriteLine($"{Board.Player2.Name}: {Board.Player2.GemCount} gems");
-
-            if (Board.Player1.GemCount > Board.Player2.GemCount)
-                Console.WriteLine($"{Board.Player1.Name} wins!");
-            else if (Board.Player2.GemCount > Board.Player1.GemCount)
-                Console.WriteLine($"{Board.Player2.Name} wins!");
-            else
-                Console.WriteLine("It's a tie!");
-        }
 
     }
 
@@ -236,3 +296,4 @@ namespace GemHunter1
         }
     }
 }
+
