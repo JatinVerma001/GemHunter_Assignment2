@@ -1,5 +1,6 @@
 ﻿using GemHunter1;
 using System;
+using System.Globalization;
 
 namespace GemHunter1
 {
@@ -62,7 +63,7 @@ namespace GemHunter1
                     if (y > 5) y = 5;
                     break;
                 default:
-                    Console.WriteLine("Invalid move. Please enter U, D, L, or R.");
+                    Console.WriteLine("\nInvalid move. Please enter U, D, L, or R.");
                     break;
             }
 
@@ -77,21 +78,35 @@ namespace GemHunter1
     {
         public Board Board { get; }
 
+        public Player Player1 { get; }
+        public Player Player2 { get; }
+        public Player CurrentTurn { get; set; } // Add this property
+
         public Game()
         {
             Board = new Board();
+
+            Player1 = new Player("P1", new Position(0, 0));
+            Player2 = new Player("P2", new Position(5, 5));
+            CurrentTurn = Player1; // Initialize the current turn to Player1
         }
 
         public void Start()
         {
-            Console.WriteLine("Welcome to Gem Hunters! \n");
+            Console.WriteLine("\nWelcome to Gem Hunters! \n");
 
-            for (int turn = 1; turn <= 15; turn++)
+            for (int turn = 1; turn <= 30; turn++)
             {
                 Console.WriteLine($"Turn {turn}:");
 
                 DisplayBoard();
                 TakeTurn();
+
+                if ((Player1.GemCount + Player2.GemCount) >= 9  || Player1.GemCount>= 5 || Player2.GemCount >= 5)
+                {
+                    break;
+                }
+
                 SwitchTurn();
             }
 
@@ -102,26 +117,27 @@ namespace GemHunter1
         {
             Console.WriteLine("Current Board:");
             Board.Display();
-            Console.WriteLine($"{Board.Player1.Name}: {Board.Player1.GemCount} gems");
-            Console.WriteLine($"{Board.Player2.Name}: {Board.Player2.GemCount} gems");
+            Console.WriteLine($"{Player1.Name}: {Player1.GemCount} gems");
+            Console.WriteLine($"{Player2.Name}: {Player2.GemCount} gems");
         }
         private void TakeTurn()
         {
-            Console.WriteLine($"{Board.CurrentTurn.Name}'s turn. Enter move (U/D/L/R): ");
+            Console.WriteLine($"{CurrentTurn.Name}'s turn. Enter move (U/D/L/R): ");
             string move = Console.ReadLine().ToUpper() ?? "";
 
 
-            if (Board.IsValidMove(Board.CurrentTurn, move))
+            if (Board.IsValidMove(CurrentTurn, move))
             {
-                Board.CurrentTurn.MovePlayer(Board.CurrentTurn, move);
-                Board.CollectGem(Board.CurrentTurn);
+                CurrentTurn.MovePlayer(CurrentTurn, move);
+                Board.CollectGem(CurrentTurn);
             }
-
+            else
+                Console.WriteLine("\nError: That's an Invalid Move!");
 
             // Check for obstacles
-            if (Board.Grid[Board.CurrentTurn.Position.X, Board.CurrentTurn.Position.Y].Occupant == "X")
+            if (Board.Grid[CurrentTurn.Position.X, CurrentTurn.Position.Y].Occupant == "X")
             {
-                Console.WriteLine($"Oops! {Board.CurrentTurn.Name} hit an obstacle and cannot move.");
+                Console.WriteLine($"Oops! {CurrentTurn.Name} hit an obstacle and cannot move.");
                 // You might want to handle this differently, e.g., skip the turn or penalize the player
             }
         }
@@ -129,25 +145,19 @@ namespace GemHunter1
 
         private void SwitchTurn()
         {
-            Board.CurrentTurn = (Board.CurrentTurn == Board.Player1) ? Board.Player2 : Board.Player1;
-        }
-
-        private bool IsGameOver()
-        {
-            // You can define your own game-over conditions
-            return Board.Player1.GemCount + Board.Player2.GemCount >= 20;
+            CurrentTurn = (CurrentTurn == Player1) ? Player2 : Player1;
         }
 
         private void AnnounceWinner()
         {
             Console.WriteLine("Game over!");
-            Console.WriteLine($"{Board.Player1.Name}: {Board.Player1.GemCount} gems");
-            Console.WriteLine($"{Board.Player2.Name}: {Board.Player2.GemCount} gems");
+            Console.WriteLine($"{Player1.Name}: {Player1.GemCount} gems");
+            Console.WriteLine($"{Player2.Name}: {Player2.GemCount} gems");
 
-            if (Board.Player1.GemCount > Board.Player2.GemCount)
-                Console.WriteLine($"{Board.Player1.Name} wins!");
-            else if (Board.Player2.GemCount > Board.Player1.GemCount)
-                Console.WriteLine($"{Board.Player2.Name} wins!");
+            if (Player1.GemCount > Player2.GemCount)
+                Console.WriteLine($"{Player1.Name} wins!");
+            else if (Player2.GemCount > Player1.GemCount)
+                Console.WriteLine($"{Player2.Name} wins!");
             else
                 Console.WriteLine("It's a tie!");
         }
@@ -158,9 +168,7 @@ namespace GemHunter1
     public class Board
     {
         public Cell[,] Grid { get; }
-        public Player Player1 { get; }
-        public Player Player2 { get; }
-        public Player CurrentTurn { get; set; } // Add this property
+        
 
         public Board()
         {
@@ -176,12 +184,8 @@ namespace GemHunter1
             Grid[0, 0] = new Cell("P1");
             Grid[5, 5] = new Cell("P2");
 
-            PlaceGems(7);
-            PlaceObstacles(5);
-            Player1 = new Player("P1", new Position(0, 0));
-            Player2 = new Player("P2", new Position(5, 5));
-            CurrentTurn = Player1; // Initialize the current turn to Player1
-
+            PlaceGems(9);
+            PlaceObstacles(7);
 
         }
         private void PlaceGems(int numberOfGems)
@@ -209,8 +213,8 @@ namespace GemHunter1
                 int x, y;
                 do
                 {
-                    x = random.Next(0, Grid.GetLength(0));
-                    y = random.Next(0, Grid.GetLength(1));
+                    x = random.Next(1, 5);
+                    y = random.Next(1, 5);
                 } while (Grid[x, y].Occupant != "-");
 
                 Grid[x, y].Occupant = "X";
@@ -223,7 +227,7 @@ namespace GemHunter1
             {
                 for (int j = 0; j < Grid.GetLength(1); j++)
                 {
-                    Console.Write(Grid[i, j].Occupant + " ");
+                    Console.Write(string.Format("{0, -5}", Grid[i, j].Occupant));
                 }
                 Console.WriteLine();
             }
@@ -286,9 +290,9 @@ namespace GemHunter1
 
     }
 
-    class Program
+    public class Program
     {
-        static void Main()
+       static void Main()
         {
             Game gemHunters = new Game();
             gemHunters.Start();
